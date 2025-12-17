@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Void Runner</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Courier New', Courier, monospace;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+        #game-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #fff;
+            font-size: 24px;
+            font-weight: bold;
+            pointer-events: none;
+            text-shadow: 2px 2px 0 #000;
+            z-index: 5;
+        }
+        #controls-hint {
+            position: absolute;
+            bottom: 30px;
+            width: 100%;
+            text-align: center;
+            color: rgba(255,255,255,0.5);
+            font-size: 14px;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+        #game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 10;
+        }
+        #game-over.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        /* Title Screen */
+        #title-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 30%, rgba(0,0,0,0.9) 100%);
+            z-index: 20;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            color: #fff;
+        }
+        .content {
+            background: rgba(15, 15, 15, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            text-align: left;
+            max-width: 280px;
+            width: auto;
+            height: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            margin-right: 60px;
+        }
+        @media (max-width: 600px) {
+            #title-screen {
+                background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%);
+                justify-content: center;
+                align-items: flex-end;
+                padding-bottom: 20px;
+            }
+            .content {
+                width: 85%;
+                max-width: 340px;
+                margin-right: 0;
+                border: 1px solid rgba(255,255,255,0.15);
+                padding: 12px;
+                text-align: center;
+                background: rgba(15, 15, 15, 0.85);
+            }
+        }
+        h1.glitch-title {
+            font-size: 18px;
+            margin: 0 0 10px 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            padding-bottom: 6px;
+            text-shadow: 0 0 15px rgba(255,255,255,0.3);
+        }
+        .section {
+            margin-bottom: 10px;
+            text-align: inherit;
+        }
+        label {
+            display: block;
+            font-size: 9px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .color-picker {
+            display: flex;
+            gap: 6px;
+            justify-content: inherit;
+            flex-wrap: wrap;
+        }
+        .swatch {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .swatch:hover {
+            transform: scale(1.15);
+            border-color: rgba(255,255,255,0.5);
+        }
+        .swatch.selected {
+            border-color: #fff;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+        input[type=range] {
+            width: 100%;
+            background: transparent;
+            -webkit-appearance: none;
+            margin: 4px 0;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 3px;
+            background: #444;
+            border: none;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 12px;
+            width: 12px;
+            border-radius: 50%;
+            background: #fff;
+            margin-top: -4.5px;
+            cursor: pointer;
+        }
+        .stats-preview {
+            display: flex;
+            justify-content: space-between;
+            font-size: 8px;
+            font-weight: bold;
+            color: rgba(255,255,255,0.8);
+            margin-top: 2px;
+            font-family: monospace;
+        }
+        
+        button {
+            padding: 8px 0;
+            width: 100%;
+            font-size: 13px;
+            background: #fff;
+            color: #000;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: monospace;
+            text-transform: uppercase;
+            font-weight: 900;
+            margin-top: 8px;
+            transition: all 0.2s;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(255,255,255,0.15);
+        }
+        button:hover {
+            background: #eee;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(255,255,255,0.2);
+        }
+        button:active {
+            background: #ccc;
+            transform: translateY(0);
+        }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://esm.sh/three@0.160.0",
+                "three/addons/": "https://esm.sh/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="game-container"></div>
+    <div id="title-screen">
+        <div class="content">
+            <h1 class="glitch-title">VOID RUNNER</h1>
+            
+            <div class="char-creator">
+                <div class="section">
+                    <label>SIGNAL COLOR</label>
+                    <div class="color-picker" id="color-picker">
+                        <div class="swatch selected" data-color="0xFFD700" style="background: #FFD700;"></div> <!-- Yellow -->
+                        <div class="swatch" data-color="0xFF0055" style="background: #FF0055;"></div> <!-- Neon Red -->
+                        <div class="swatch" data-color="0x00FFAA" style="background: #00FFAA;"></div> <!-- Cyan -->
+                        <div class="swatch" data-color="0xAA00FF" style="background: #AA00FF;"></div> <!-- Purple -->
+                        <div class="swatch" data-color="0xFFFFFF" style="background: #FFFFFF;"></div> <!-- White -->
+                    </div>
+                </div>
+
+                <div class="section">
+                    <label>RESONANCE (SIZE)</label>
+                    <input type="range" id="size-slider" min="0.9" max="1.1" step="0.05" value="1.0">
+                    <div class="stats-preview">
+                        <span id="speed-stat">SPEED: 100%</span>
+                        <span id="jump-stat">JUMP: 100%</span>
+                    </div>
+                </div>
+            </div>
+
+            <button id="start-game-btn">INITIALIZE RUN</button>
+        </div>
+    </div>
+
+    <div id="ui" style="display: none;">SCORE: 0</div>
+    <div id="controls-hint" style="display: none;">DRAG TO STEER • TAP/SWIPE UP TO JUMP</div>
+    
+    <div id="game-over">
+        <h1 style="font-size: 40px; margin: 0 0 20px 0;">VOID</h1>
+        <p id="final-score" style="font-size: 20px;">SCORE: 0</p>
+        <button id="restart-btn">RETRY</button>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4c6229722a6346bc8eb5cb0e5eae5d41","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
+
